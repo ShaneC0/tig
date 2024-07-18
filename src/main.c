@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
         {0,                0,                 0,  0   }
     };
 
-    while((c = getopt_long(argc, argv, "ic:b:s:h:", long_options, NULL)) != -1) {
+    while((c = getopt_long(argc, argv, "ic:b:s:x:lh", long_options, NULL)) != -1) {
         switch(c) {
             case 'i':
                 init_flag = 1;
