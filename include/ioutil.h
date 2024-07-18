@@ -97,7 +97,7 @@ void parse_file_from_prefix(char *filepath, char *prefix, char *value) {
             return;
         }
     }
-    printf("ERROR -- Unable to read %s from config", prefix);
+    printf("ERROR -- Unable to read %s from %s", prefix, filepath);
     exit(1);
 }
 

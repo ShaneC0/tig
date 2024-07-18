@@ -2,6 +2,10 @@
 #include <openssl/evp.h>
 #include "ioutil.h"
 
+void create_object_path(char *hash, char *path) {
+   sprintf(path, "tig/objects/%c%c/%s", hash[0], hash[1], hash + 2); 
+}
+
 void write_config() {
     FILE *config = open_safe("tig/.tigconfig", "w");
     char name[64];
@@ -108,7 +112,7 @@ void write_file_tree(char *hash_to_create, char *basepath) {
 void write_work_directory(char *tree_hash, char *basepath) {
     char dirpath[64];
     char filepath[128];
-    mkdir_safe(basepath, 0);
+    mkdir_safe(basepath, 1);
     sprintf(dirpath, "tig/objects/%c%c", tree_hash[0], tree_hash[1]);
     if(access(dirpath, F_OK) == -1) {
         printf("ERROR -- Can't find tree directory!");
@@ -119,20 +123,40 @@ void write_work_directory(char *tree_hash, char *basepath) {
     char hash[41];
     char name[32];
     char path[128];
-    char blobpath[128];
     while(fscanf(tree_file, "%s %s %s", type, hash, name) != EOF) {
         printf("%s %s %s\n", type, hash, name);
         sprintf(path, "%s/%s", basepath, name);
         if(strncmp(type, "blob", 4) == 0) {
-            FILE *working_file = open_safe(path, "w");
-            char line[128];
-            sprintf(blobpath, "tig/objects/%c%c/%s", hash[0], hash[1], hash + 2);
-            FILE *blobfile = open_safe(blobpath, "r");
-            while(fgets(line, sizeof(line), blobfile) != NULL) {
-                fprintf(working_file, "%s\n", line);
+            char blob_path[128];
+            create_object_path(hash, blob_path);
+            if(access(path, F_OK) == -1) {
+                //file doesn't exist
+                //so copy blob to working dir
+                FILE *new_file = open_safe(path, "w");
+                char *blob_content = read_to_buffer(blob_path);
+                fputs(blob_content, new_file);
+                free(blob_content);
+                close_safe(new_file);
+            } else {
+                //file exists
+                //compute hash
+                char existing_file_hash[41];
+                char *file_content = read_to_buffer(path);
+                size_t hash_str_size = strlen(type) + strlen(file_content) + 8;
+                char hash_str[hash_str_size];
+                sprintf(hash_str, "%s %zu %s", type, strlen(file_content), file_content);
+                sha1(hash_str, existing_file_hash);
+                free(file_content);
+                //compare with existing hash
+                if(strncmp(hash, existing_file_hash, 40) != 0) {
+                    //overwrite existing file
+                    FILE *existing_file = open_safe(path, "w");
+                    char *blob_content = read_to_buffer(blob_path);
+                    fputs(blob_content, existing_file);
+                    free(blob_content); 
+                    close_safe(existing_file);
+                }
             }
-            close_safe(working_file);
-            close_safe(blobfile);
         } else if (strncmp(type, "tree", 4) == 0) {
             write_work_directory(hash, path);
         }

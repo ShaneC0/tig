@@ -1,15 +1,11 @@
 #include "plumbing.h"
 
-void create_object_path(char *hash, char *path) {
-   sprintf(path, "tig/objects/%c%c/%s", hash[0], hash[1], hash + 2); 
-}
-
 void create_commit(char *message, char *commit_hash) {
     char tree_hash[41];
     char name[64];
     char timestamp[64];
     char message_content[1024];
-    char *message_template = "parent\t%s\ntree\t%s\ncommitter\t%s\ntimestamp\t%s\nmessage\t%s\n";
+    char *message_template = "parent %s\ntree %s\ncommitter %s\ntimestamp %s\nmessage %s\n";
     char head_ref[512];
     char head_hash[41];
     // Build file tree
@@ -59,8 +55,7 @@ void switch_branch(char *name) {
     read_ref(ref_path, commit_hash, sizeof(commit_hash));
     create_object_path(commit_hash, commit_path);
     parse_file_from_prefix(commit_path, "tree ", tree_hash);
-    write_work_directory(tree_hash, "temp");
-    // TODO: replace working dir with temp dir
+    write_work_directory(tree_hash, "test");
 }
 
 void enumerate_commits(char *commit_hash) {
