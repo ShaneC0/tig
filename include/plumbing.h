@@ -82,7 +82,7 @@ void write_file_tree(char *hash_to_create, char *basepath) {
     FILE *temp_file = open_safe("tig/snapshot.temp", "w");
     DIR *dir = opendir_safe(basepath);
     while((files = readdir(dir)) != NULL) {
-        if(strcmp(files->d_name, ".") == 0 || strcmp(files->d_name, "..") == 0) continue;         
+        if(strcmp(files->d_name, ".") == 0 || strcmp(files->d_name, "..") == 0 || strcmp(files->d_name, ".git") == 0 || strcmp(files->d_name, "tig") == 0) continue;         
         struct stat statbuf;
         char path[256];
         sprintf(path, "%s/%s", basepath, files->d_name);

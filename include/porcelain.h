@@ -9,7 +9,7 @@ void create_commit(char *message, char *commit_hash) {
     char head_ref[512];
     char head_hash[41];
     // Build file tree
-    write_file_tree(tree_hash, "./test");
+    write_file_tree(tree_hash, ".");
     if(remove("tig/snapshot.temp") != 0) {
         printf("ERROR -- Error removing snapshot.temp file!");
     }
@@ -55,7 +55,7 @@ void switch_branch(char *name) {
     read_ref(ref_path, commit_hash, sizeof(commit_hash));
     create_object_path(commit_hash, commit_path);
     parse_file_from_prefix(commit_path, "tree ", tree_hash);
-    write_work_directory(tree_hash, "test");
+    write_work_directory(tree_hash, ".");
 }
 
 void enumerate_commits(char *commit_hash) {
