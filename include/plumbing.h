@@ -124,7 +124,6 @@ void write_work_directory(char *tree_hash, char *basepath) {
     char name[32];
     char path[128];
     while(fscanf(tree_file, "%s %s %s", type, hash, name) != EOF) {
-        printf("%s %s %s\n", type, hash, name);
         sprintf(path, "%s/%s", basepath, name);
         if(strncmp(type, "blob", 4) == 0) {
             char blob_path[128];
