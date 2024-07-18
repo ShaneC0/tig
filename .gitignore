@@ -1,9 +1,5 @@
 tig/
-tig-backup/
 .DS_STORE
-test/
-old/
 obj/
 bin/
-tig
 compile_flags.txt
