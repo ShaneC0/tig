@@ -2,6 +2,8 @@
 #include <openssl/evp.h>
 #include "ioutil.h"
 
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
 void create_object_path(char *hash, char *path) {
    sprintf(path, "tig/objects/%c%c/%s", hash[0], hash[1], hash + 2); 
 }
@@ -110,14 +112,13 @@ void write_file_tree(char *hash_to_create, char *basepath) {
 }
 
 void write_work_directory(char *tree_hash, char *basepath) {
-    char dirpath[64];
     char filepath[128];
     mkdir_safe(basepath, 1);
-    sprintf(dirpath, "tig/objects/%c%c", tree_hash[0], tree_hash[1]);
-    if(access(dirpath, F_OK) == -1) {
-        printf("ERROR -- Can't find tree directory!");
+    create_object_path(tree_hash, filepath);
+    if(access(filepath, F_OK) == -1) {
+        printf("ERROR -- Error reading tree file %s\n", tree_hash);
+        exit(1);
     }
-    sprintf(filepath, "%s/%s", dirpath, tree_hash + 2);
     FILE *tree_file = open_safe(filepath, "r");
     char type[16];
     char hash[41];
@@ -161,4 +162,79 @@ void write_work_directory(char *tree_hash, char *basepath) {
         }
     }
     close_safe(tree_file);
+}
+
+void free_lcs(char **lcs, int index) {
+    for(int i = 0; i < index; i++) {
+        free(lcs[index]);
+    }
+    free(lcs);
+}
+
+void backtrack_diff(int *diff[], char **X, char **Y, int i, int j, char **lcs, int *index) {
+    if(i == 0 || j == 0) return;
+    if(strcmp(X[i-1], Y[j-1]) == 0) {
+        backtrack_diff(diff, X, Y, i-1, j-1, lcs, index);
+        lcs[*index] = strdup(X[i-1]);
+        (*index)++;
+    } else if(diff[i][j-1] > diff[i-1][j]) {
+        backtrack_diff(diff, X, Y, i, j-1, lcs, index);
+    } else {
+        backtrack_diff(diff, X, Y, i-1, j, lcs, index);
+    }
+}
+
+char **least_common_subsequence(char **X, char **Y, int Xn, int Yn, int *index) {
+    int i, j;
+    int **diff = malloc((Xn + 1) * sizeof(int *));
+    for (i = 0; i <= Xn; i++) {
+        diff[i] = malloc((Yn + 1) * sizeof(int));
+    }
+    for(i = 0; i <= Xn; i++) {
+        for(j = 0; j <= Yn; j++) {
+            if(i == 0 || j == 0) {
+                diff[i][j] = 0;
+            } else if(strcmp(X[i-1], Y[j-1]) == 0) {
+                diff[i][j] = diff[i-1][j-1] + 1;
+            } else {
+                diff[i][j] = MAX(diff[i][j-1], diff[i-1][j]);
+            }
+        }
+    }
+    for(i = 0; i <= Xn; i++) {
+        for(j = 0; j <= Yn; j++) {
+            printf("%d ", diff[i][j]);
+        }
+        printf("\n");
+    }
+    printf("Length of LCS: %d\n", diff[Xn][Yn]);
+    char **lcs = malloc((diff[Xn][Yn] + 1) * sizeof(char *));
+    *index = 0;
+    backtrack_diff(diff, X, Y, Xn, Yn, lcs, index);
+    lcs[*index] = NULL;
+    for(i = 0; i <=Xn; i++) {
+        free(diff[i]);
+    }
+    free(diff);
+    return lcs;
+}
+
+void file_diff(char *path1, char *path2) {
+    int Xn, Yn;
+    char **X = read_to_lines(path1, &Xn);
+    char **Y = read_to_lines(path2, &Yn);
+    printf("Xn: %d\n", Xn);
+    printf("Yn: %d\n", Yn);
+    int lcs_n;
+    char **lcs = least_common_subsequence(X, Y, Xn, Yn, &lcs_n);
+    printf("LCS:\n");
+    for(int i = 0; i < lcs_n; i++) {
+        printf("%s\n", lcs[i]);
+    }
+
+
+
+    free_lcs(lcs, lcs_n);
+    free_lines(X, Xn);
+    free_lines(Y, Yn);
 }

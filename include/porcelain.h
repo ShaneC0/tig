@@ -92,6 +92,10 @@ void print_branches() {
     }
 }
 
+void merge(char *branch_name) {
+    // Commit with two parents
+}
+
 void initialize_repository() {
     char hash[41];
     mkdir_safe("tig", 0);

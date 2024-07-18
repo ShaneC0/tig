@@ -85,6 +85,45 @@ char *read_to_buffer(char *filepath) {
     return buffer;
 }
 
+char **read_to_lines(char *path, int *num_lines) {
+    char *content = read_to_buffer(path);
+    *num_lines = 0;
+    for (char *ptr = content; *ptr; ptr++) {
+        if (*ptr == '\n') {
+            (*num_lines)++;
+        }
+    }
+    char **lines = malloc((*num_lines + 1) * sizeof(char *));
+    if (!lines) {
+        perror("malloc");
+        free(content);
+        exit(EXIT_FAILURE);
+    }
+    int line_index = 0;
+    char *line = strtok(content, "\n");
+    while (line) {
+        lines[line_index] = strdup(line);
+        if (!lines[line_index]) {
+            perror("strdup");
+            free(content);
+            exit(EXIT_FAILURE);
+        }
+        line = strtok(NULL, "\n");
+        line_index++;
+    }
+    *num_lines = line_index;
+    lines[line_index] = NULL;  
+    free(content);
+    return lines;
+}
+
+void free_lines(char **lines, int num_lines) {
+    for(int i = 0; i < num_lines; i++) {
+        free(lines[i]);
+    }
+    free(lines);
+}
+
 void parse_file_from_prefix(char *filepath, char *prefix, char *value) {
     FILE *f = open_safe(filepath, "r");
     char line[128];

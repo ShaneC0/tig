@@ -70,3 +70,22 @@ The `tig --list-branch` command shows the list of branches with their latest com
 - Iterates through the references in the `refs/` directory.
 - Displays the branch names and the corresponding commit hashes.
 
+### Merging -- WIP
+Merging requires some interesting plumbing algorithms to implement, namely Least Common Ancestor and Diff.
+- Get the tree hash of current branch and specified branch
+- Find the least common ancestor commit.
+- Calc file diff from LCM to current branch.
+- Calc file diff from LCM to specified branch.
+- If both branches modify the same file:
+    - Calc linewise diff from current to specified on that file
+    - If both branches modify the same line
+        - MERGE CONFLICT
+    - Apply linewise diff
+- Apply filewise diff
+
+### Least Common Ancestor
+The LCM algorithm works by performing a Breadth-First Search on both commit trees and returns the first
+commit which is common to both branches.
+
+### Diff
+The Diff algorithm takes two sets of input (lines or files) and returns the longest subsequence that can be produced from both.
