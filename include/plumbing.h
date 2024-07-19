@@ -247,7 +247,7 @@ void apply_file_diff(char *path, char *patch_hash) {
     free(f);
 }
 
-void file_diff(char *path1, char *path2, char *patch_hash) {
+void file_diff(char *path1, char *path2, char *patch_hash, int apply) {
     int Xn, Yn;
     char **X = read_to_lines(path1, &Xn);
     char **Y = read_to_lines(path2, &Yn);
@@ -284,7 +284,8 @@ void file_diff(char *path1, char *path2, char *patch_hash) {
     free_lines(X, Xn);
     free_lines(Y, Yn);
     write_object("patch", patch, patch_hash);
-    apply_file_diff(path1, patch_hash);
+    free(patch);
+    if(apply) apply_file_diff(path1, patch_hash);
 }
 
     

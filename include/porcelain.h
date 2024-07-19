@@ -48,7 +48,6 @@ void switch_branch(char *name) {
     if(stat(ref_path, &statbuf) != 0) {
         printf("ERROR -- Specified branch name does not exist %s\n", name);
     }
-    write_ref("tig/HEAD", ref_path);
     char commit_hash[41];
     char commit_path[128];
     char tree_hash[41];
@@ -56,6 +55,7 @@ void switch_branch(char *name) {
     create_object_path(commit_hash, commit_path);
     parse_file_from_prefix(commit_path, "tree ", tree_hash);
     write_work_directory(tree_hash, ".");
+    write_ref("tig/HEAD", ref_path);
 }
 
 void enumerate_commits(char *commit_hash) {
@@ -92,11 +92,61 @@ void print_branches() {
     }
 }
 
+void find_object_hash(char *tree_hash, char * target, char *target_hash) {
+    char tree_path[256];
+    create_object_path(tree_hash, tree_path);
+    FILE *tree = open_safe(tree_path, "r");
+    char type[16]; 
+    char hash[41];
+    char filename[64];
+    while(fscanf(tree, "%s %s %s", type, hash, filename) !=  EOF) {
+        if(strcmp(type, "blob") == 0) {
+            if(strcmp(filename, target) == 0) {
+                strcpy(target_hash, hash);
+                close_safe(tree);
+                return;
+            }
+        } else if(strcmp(type, "tree") == 0) {
+            find_object_hash(hash, target, target_hash);
+            if(strlen(target_hash) > 0) {
+                close_safe(tree);
+                return;
+            }
+        }
+    }
+    close_safe(tree);
+    target_hash[0] = '\0';
+}
+
 // want to compare file against latest commit version
 // how do we get the hash of the commit's version of the file?
 // traverse the tree?
 void print_diff(char *filepath) {
-    
+    char patch_hash[41];
+    char head_ref[256];
+    char head_commit_hash[41];
+    char head_commit_path[256];
+    char tree_hash[41];
+    read_ref("tig/HEAD", head_ref, sizeof(head_ref));
+    read_ref(head_ref, head_commit_hash, sizeof(head_commit_hash));
+    create_object_path(head_commit_hash, head_commit_path);
+    parse_file_from_prefix(head_commit_path, "tree ", tree_hash);
+    char *filename = strrchr(filepath, '/');
+    if(filename) {
+        filename++;
+    } else {
+        filename = filepath;
+    }
+    char target_hash[41];
+    char latest_path[256];
+    find_object_hash(tree_hash, filename, target_hash);
+    create_object_path(target_hash, latest_path); 
+    file_diff(latest_path, filepath, patch_hash, 0);    
+    char patch_path[256];
+    create_object_path(patch_hash, patch_path);
+    char *patch = read_to_buffer(patch_path);
+    printf("%s\n", patch);
+    free(patch);
 }
 
 void initialize_repository() {
@@ -104,7 +154,6 @@ void initialize_repository() {
     mkdir_safe("tig", 0);
     mkdir_safe("tig/objects", 0);
     mkdir_safe("tig/refs", 0);
-    mkdir_safe("tig/patches", 0);
     write_ref("tig/refs/master", "root\n");
     write_config();
     write_ref("tig/HEAD", "tig/refs/master\n");
