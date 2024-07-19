@@ -92,8 +92,11 @@ void print_branches() {
     }
 }
 
-void merge(char *branch_name) {
-    // Commit with two parents
+// want to compare file against latest commit version
+// how do we get the hash of the commit's version of the file?
+// traverse the tree?
+void print_diff(char *filepath) {
+    
 }
 
 void initialize_repository() {
@@ -101,6 +104,7 @@ void initialize_repository() {
     mkdir_safe("tig", 0);
     mkdir_safe("tig/objects", 0);
     mkdir_safe("tig/refs", 0);
+    mkdir_safe("tig/patches", 0);
     write_ref("tig/refs/master", "root\n");
     write_config();
     write_ref("tig/HEAD", "tig/refs/master\n");

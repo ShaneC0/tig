@@ -101,7 +101,8 @@ int main(int argc, char **argv) {
         //print_help();
     //}
 //
-    file_diff("foo", "bar");
+    char patch_hash[41];
+    file_diff("bar", "foo", patch_hash);
     return 0;
 }
 

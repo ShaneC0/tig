@@ -103,11 +103,6 @@ char **read_to_lines(char *path, int *num_lines) {
     char *line = strtok(content, "\n");
     while (line) {
         lines[line_index] = strdup(line);
-        if (!lines[line_index]) {
-            perror("strdup");
-            free(content);
-            exit(EXIT_FAILURE);
-        }
         line = strtok(NULL, "\n");
         line_index++;
     }

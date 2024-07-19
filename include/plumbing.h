@@ -201,13 +201,6 @@ char **least_common_subsequence(char **X, char **Y, int Xn, int Yn, int *index) 
             }
         }
     }
-    for(i = 0; i <= Xn; i++) {
-        for(j = 0; j <= Yn; j++) {
-            printf("%d ", diff[i][j]);
-        }
-        printf("\n");
-    }
-    printf("Length of LCS: %d\n", diff[Xn][Yn]);
     char **lcs = malloc((diff[Xn][Yn] + 1) * sizeof(char *));
     *index = 0;
     backtrack_diff(diff, X, Y, Xn, Yn, lcs, index);
@@ -219,22 +212,95 @@ char **least_common_subsequence(char **X, char **Y, int Xn, int Yn, int *index) 
     return lcs;
 }
 
-void file_diff(char *path1, char *path2) {
+void apply_file_diff(char *path, char *patch_hash) {
+    char patch_path[256];
+    int patch_n;
+    int f_n;
+    create_object_path(patch_hash, patch_path);
+    char **patch = read_to_lines(patch_path, &patch_n); 
+    char **f = read_to_lines(path, &f_n);
+    char **new_lines = malloc((patch_n + f_n) * sizeof(char *));
+    int newline_ct = 0;
+    int i = 0, j = 0;
+    while(j < patch_n) {
+        if(patch[j][0] == ' ') {
+            new_lines[newline_ct++] = strdup(patch[j] + 1);
+            i++;
+        } else if(patch[j][0] == '+') {
+            new_lines[newline_ct++] = strdup(patch[j] + 1);
+        } else if(patch[j][0] == '-') {
+            i++;
+        }
+        j++;
+    }
+    while(i < f_n) {
+        new_lines[newline_ct++] = strdup(f[i++]);
+    }
+    FILE *file = open_safe(path, "w");
+    for(int k = 0; k < newline_ct; k++) {
+        fprintf(file, "%s\n", new_lines[k]);
+        free(new_lines[k]);
+    }
+    close_safe(file);
+    free(new_lines);
+    free(patch);
+    free(f);
+}
+
+void file_diff(char *path1, char *path2, char *patch_hash) {
     int Xn, Yn;
     char **X = read_to_lines(path1, &Xn);
     char **Y = read_to_lines(path2, &Yn);
-    printf("Xn: %d\n", Xn);
-    printf("Yn: %d\n", Yn);
     int lcs_n;
     char **lcs = least_common_subsequence(X, Y, Xn, Yn, &lcs_n);
-    printf("LCS:\n");
-    for(int i = 0; i < lcs_n; i++) {
-        printf("%s\n", lcs[i]);
+    int i = 0, j = 0, k = 0;
+    size_t patch_sz = 1024;
+    char *patch = malloc(patch_sz); //----------------------------------
+    char line[512];
+    patch[0] = '\0';
+    while (i < Xn || j < Yn) {
+        if (i < Xn && (k >= lcs_n || strcmp(X[i], lcs[k]) != 0)) {
+            snprintf(line, sizeof(line), "-%s\n", X[i]);
+            i++;
+        } else if (j < Yn && (k >= lcs_n || strcmp(Y[j], lcs[k]) != 0)) {
+            snprintf(line, sizeof(line), "+%s\n", Y[j]);
+            j++;
+        } else {
+            snprintf(line, sizeof(line), " %s\n", X[i]);
+            i++;
+            j++;
+            k++;
+        }
+        if (strlen(patch) + strlen(line) >= patch_sz) {
+            patch_sz *= 2;
+            patch = realloc(patch, patch_sz);
+            if (!patch) {
+                printf("ERROR -- Error allocating memory for patch!");
+            }
+        }
+        strncat(patch, line, patch_sz - strlen(patch) - 1);
     }
-
-
-
     free_lcs(lcs, lcs_n);
     free_lines(X, Xn);
     free_lines(Y, Yn);
+    write_object("patch", patch, patch_hash);
+    apply_file_diff(path1, patch_hash);
 }
+
+    
+    // TODO -- Write function to show additions and deletions from Xn -> Yn with line numbers
+    //int i = 0, j = 0, k = 0;
+    //while (i < Xn || j < Yn) {
+        //if (i < Xn && (k >= lcs_n || strcmp(X[i], lcs[k]) != 0)) {
+            //printf("--D-- %d: %s\n", i + 1, X[i]);
+            //i++;
+        //} else if (j < Yn && (k >= lcs_n || strcmp(Y[j], lcs[k]) != 0)) {
+            //printf("++A++ %d: %s\n", j + 1, Y[j]);
+            //j++;
+        //} else {
+            //printf("      %d: %s\n", i + 1, X[i]);
+            //i++;
+            //j++;
+            //k++;
+        //}
+    //}
