@@ -184,7 +184,7 @@ void backtrack_diff(int *diff[], char **X, char **Y, int i, int j, char **lcs, i
     }
 }
 
-char **least_common_subsequence(char **X, char **Y, int Xn, int Yn, int *index) {
+char **longest_common_subsequence(char **X, char **Y, int Xn, int Yn, int *index) {
     int i, j;
     int **diff = malloc((Xn + 1) * sizeof(int *));
     for (i = 0; i <= Xn; i++) {
@@ -252,7 +252,7 @@ void file_diff(char *path1, char *path2, char *patch_hash, int apply) {
     char **X = read_to_lines(path1, &Xn);
     char **Y = read_to_lines(path2, &Yn);
     int lcs_n;
-    char **lcs = least_common_subsequence(X, Y, Xn, Yn, &lcs_n);
+    char **lcs = longest_common_subsequence(X, Y, Xn, Yn, &lcs_n);
     int i = 0, j = 0, k = 0;
     size_t patch_sz = 1024;
     char *patch = malloc(patch_sz); //----------------------------------
@@ -286,6 +286,32 @@ void file_diff(char *path1, char *path2, char *patch_hash, int apply) {
     write_object("patch", patch, patch_hash);
     free(patch);
     if(apply) apply_file_diff(path1, patch_hash);
+}
+
+bool file_is_modified(char *path1, char *path2) {
+
+}
+
+void dir_diff(char *dir1, char *dir2, char *patch_hash) {
+    DIR *d1 = opendir_safe(dir1);
+    DIR *d2 = opendir_safe(dir2);
+    struct dirent *entry1;
+    struct dirent *entry2;
+
+    while((entry1 = readdir(d1)) != NULL) {
+        if(strcmp(entry1->d_name, ".") == 0 || strcmp(entry1->d_name, "..") == 0) continue;
+        char path1[256];
+        char path2[256];
+        sprintf(path1, "%s/%s", dir1, entry1->d_name);
+        sprintf(path2, "%s/%s", dir2, entry2->d_name);
+        struct stat stat1;
+        struct stat stat2;
+    }
+    while((entry2 = readdir(d2)) != NULL) {
+        if(strcmp(entry2->d_name, ".") == 0 || strcmp(entry2->d_name, "..") == 0) continue;
+    }
+    closedir(d1);
+    closedir(d2);
 }
 
     

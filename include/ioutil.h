@@ -135,7 +135,6 @@ void parse_file_from_prefix(char *filepath, char *prefix, char *value) {
     exit(1);
 }
 
-
 void generate_timestamp(char *buffer, size_t size) {
     time_t current_time;
     struct tm *time_info;
