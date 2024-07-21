@@ -288,30 +288,13 @@ void file_diff(char *path1, char *path2, char *patch_hash, int apply) {
     if(apply) apply_file_diff(path1, patch_hash);
 }
 
-bool file_is_modified(char *path1, char *path2) {
-
-}
-
-void dir_diff(char *dir1, char *dir2, char *patch_hash) {
-    DIR *d1 = opendir_safe(dir1);
-    DIR *d2 = opendir_safe(dir2);
-    struct dirent *entry1;
-    struct dirent *entry2;
-
-    while((entry1 = readdir(d1)) != NULL) {
-        if(strcmp(entry1->d_name, ".") == 0 || strcmp(entry1->d_name, "..") == 0) continue;
-        char path1[256];
-        char path2[256];
-        sprintf(path1, "%s/%s", dir1, entry1->d_name);
-        sprintf(path2, "%s/%s", dir2, entry2->d_name);
-        struct stat stat1;
-        struct stat stat2;
-    }
-    while((entry2 = readdir(d2)) != NULL) {
-        if(strcmp(entry2->d_name, ".") == 0 || strcmp(entry2->d_name, "..") == 0) continue;
-    }
-    closedir(d1);
-    closedir(d2);
+void tree_diff(char *hash1, char *hash2, char *patch_hash) {
+    char tree_path1[256];
+    char tree_path2[256];
+    int tree_n1;
+    int tree_n2;
+    create_object_path(hash1, tree_path1);
+    create_object_path(hash2, tree_path2);
 }
 
     
